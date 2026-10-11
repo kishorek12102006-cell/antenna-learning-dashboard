@@ -4,6 +4,12 @@ A Next.js learning dashboard for a first-pass 2.4 GHz rectangular microstrip pat
 
 The contextual RF guide opens when you focus or adjust an input; it also opens from an `i` button or by clicking a calculated metric. It shows the current value, a before/after calculation as inputs change, and a response plot of estimated patch width and length. Warnings explain where this first-pass formula does not predict performance. The guide also includes feed matching and material-property concepts.
 
+## Material and infill learning controls
+
+Choose PLA, wood-filled PLA, ABS, PETG, ASA, nylon, RF filament, or a custom material. The included dielectric presets are individual printed samples measured at 2.4 GHz, with links to the research sources: [PLA infill samples](https://onlinelibrary.wiley.com/doi/full/10.1002/mop.29324) and [wood-filled PLA](https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/el.2016.2505). They are not generic values for every filament. Uncharacterized materials keep editable εr and loss-tangent assumptions and show a warning.
+
+Change the infill pattern and polymer volume fraction to see a schematic cutaway update. If those settings no longer match a published sample, the app keeps the last dielectric numbers and warns that it does not infer new RF properties from slicer settings. The cutaway shows the copper patch and feed, printed dielectric and infill, ground plane, and a coax-feed illustration. Substrate thickness is exaggerated vertically so the internal construction is visible.
+
 ## Run locally
 
 1. Install Node.js 20.9 or newer.
