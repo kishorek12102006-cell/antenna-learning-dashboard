@@ -218,7 +218,7 @@ export default function Dashboard() {
       <div className="visual-column">
         <div className="panel visual-panel">
           <div className="panel-heading visual-heading"><div><span className="section-index">LIVE VIEW</span><h2>Rectangular patch · TM₁₀</h2></div><div className="label-with-help"><span className="units">DIMENSIONS IN MM</span><LearnButton onClick={() => setActiveLesson("length")} /></div></div>
-          <AntennaViewer width={result.widthMm} length={result.lengthMm} boardWidth={result.boardWidthMm} boardLength={result.boardLengthMm} thickness={inputs.substrateMm} modelUrl={modelUrl} pattern={infillPattern} density={infillDensity}/>
+          <AntennaViewer width={result.widthMm} length={result.lengthMm} boardWidth={result.boardWidthMm} boardLength={result.boardLengthMm} thickness={inputs.substrateMm} modelUrl={modelUrl} pattern={infillPattern} density={infillDensity} materialType={materialType}/>
           <div className="dimension-strip"><div><span>PATCH WIDTH</span><b>{format(result.widthMm)} <small>mm</small></b></div><div><span>PATCH LENGTH</span><b>{format(result.lengthMm)} <small>mm</small></b></div><div><span>BOARD ESTIMATE</span><b>{format(result.boardWidthMm)} × {format(result.boardLengthMm)} <small>mm</small></b></div></div>
         </div>
         <div className="metrics-grid">
