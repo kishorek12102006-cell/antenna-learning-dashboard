@@ -3,7 +3,18 @@
 import { Suspense, useState, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment, Grid, OrbitControls, useGLTF } from "@react-three/drei";
-import type { InfillPattern } from "@/lib/print";
+import type { InfillPattern, MaterialType } from "@/lib/print";
+
+const substrateColors: Record<MaterialType, string> = {
+  pla: "#ba8260",
+  "wood-pla": "#a98252",
+  abs: "#8f9da6",
+  petg: "#5e9b9e",
+  asa: "#819b6e",
+  nylon: "#a18fba",
+  rf: "#668eb6",
+  custom: "#87958a",
+};
 
 function ImportedModel({ url }: { url: string }) {
   const { scene } = useGLTF(url);
@@ -28,28 +39,27 @@ function Beam({ from, to, height, thickness, color, opacity = 0.88 }: {
   </mesh>;
 }
 
-function Infill({ pattern, density, width, length, centerY, height }: {
+function Infill({ pattern, density, width, length, centerY, height, color }: {
   pattern: InfillPattern;
   density: number;
   width: number;
   length: number;
   centerY: number;
   height: number;
+  color: string;
 }) {
   if (pattern === "empty" || density <= 0) return null;
   const innerWidth = width * 0.88;
   const innerLength = length * 0.88;
   const cells = Math.max(2, Math.min(6, Math.round(2 + density / 25)));
   const rib = 0.025 + (density / 100) * 0.035;
-  const color = "#88a9a4";
-
   if (pattern === "solid") return <mesh position={[0, centerY, 0]}>
     <boxGeometry args={[innerWidth, height * 0.9, innerLength]} />
     <meshStandardMaterial color={color} transparent opacity={0.26} roughness={0.8} />
   </mesh>;
 
   if (pattern === "grid" || pattern === "lines" || pattern === "waffle") {
-    const ribs = [];
+    const ribs: ReactNode[] = [];
     for (let i = 1; i <= cells; i += 1) {
       const z = -innerLength / 2 + (innerLength * i) / (cells + 1);
       ribs.push(<mesh key={`x-${i}`} position={[0, centerY, z]}>
@@ -140,7 +150,7 @@ function Infill({ pattern, density, width, length, centerY, height }: {
   return null;
 }
 
-function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern, density, cutaway }: {
+function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern, density, materialType, cutaway }: {
   width: number;
   length: number;
   boardWidth: number;
@@ -148,6 +158,7 @@ function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern
   thickness: number;
   pattern: InfillPattern;
   density: number;
+  materialType: MaterialType;
   cutaway: boolean;
 }) {
   // Board dimensions are in cm. Vertical thickness is exaggerated for visibility;
@@ -161,6 +172,7 @@ function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern
   const skin = Math.min(0.075, shownH * 0.18);
   const coreH = shownH - skin * 2;
   const edge = Math.max(0.045, Math.min(0.09, Math.min(bw, bl) * 0.025));
+  const substrateColor = substrateColors[materialType];
   const metalT = 0.025;
   const topY = shownH / 2 + metalT / 2;
   const inset = Math.min(l * 0.14, 0.36);
@@ -174,26 +186,26 @@ function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern
     {cutaway ? <group>
       <mesh position={[0, shownH / 2 - skin / 2, 0]}>
         <boxGeometry args={[bw - edge * 2, skin, bl - edge * 2]} />
-        <meshStandardMaterial color="#90b4ad" transparent opacity={0.14} depthWrite={false} roughness={0.85} />
+        <meshStandardMaterial color={substrateColor} transparent opacity={0.14} depthWrite={false} roughness={0.85} />
       </mesh>
       <mesh position={[0, -shownH / 2 + skin / 2, 0]}>
         <boxGeometry args={[bw - edge * 2, skin, bl - edge * 2]} />
-        <meshStandardMaterial color="#668780" transparent opacity={0.21} depthWrite={false} roughness={0.85} />
+        <meshStandardMaterial color={substrateColor} transparent opacity={0.21} depthWrite={false} roughness={0.85} />
       </mesh>
       {[-1, 1].flatMap((side) => [
         <mesh key={`rail-x-${side}`} position={[side * (bw / 2 - edge / 2), 0, 0]}>
           <boxGeometry args={[edge, shownH, bl]} />
-          <meshStandardMaterial color="#647c78" roughness={0.82} />
+          <meshStandardMaterial color={substrateColor} roughness={0.82} />
         </mesh>,
         <mesh key={`rail-z-${side}`} position={[0, 0, side * (bl / 2 - edge / 2)]}>
           <boxGeometry args={[bw - edge * 2, shownH, edge]} />
-          <meshStandardMaterial color="#647c78" roughness={0.82} />
+          <meshStandardMaterial color={substrateColor} roughness={0.82} />
         </mesh>,
       ])}
-      <Infill pattern={pattern} density={density} width={bw - edge * 2} length={bl - edge * 2} centerY={0} height={coreH} />
+      <Infill pattern={pattern} density={density} width={bw - edge * 2} length={bl - edge * 2} centerY={0} height={coreH} color={substrateColor} />
     </group> : <mesh position={[0, 0, 0]}>
       <boxGeometry args={[bw, shownH, bl]} />
-      <meshStandardMaterial color="#78958f" roughness={0.74} />
+      <meshStandardMaterial color={substrateColor} roughness={0.74} />
     </mesh>}
 
     <mesh position={[0, -shownH / 2 - metalT / 2, 0]}>
@@ -231,7 +243,7 @@ function PatchModel({ width, length, boardWidth, boardLength, thickness, pattern
   </group>;
 }
 
-export default function AntennaViewer({ width, length, boardWidth, boardLength, thickness, modelUrl, pattern, density }: {
+export default function AntennaViewer({ width, length, boardWidth, boardLength, thickness, modelUrl, pattern, density, materialType }: {
   width: number;
   length: number;
   boardWidth: number;
@@ -240,6 +252,7 @@ export default function AntennaViewer({ width, length, boardWidth, boardLength, 
   modelUrl: string;
   pattern: InfillPattern;
   density: number;
+  materialType: MaterialType;
 }) {
   const [cutaway, setCutaway] = useState(true);
   return <>
@@ -257,7 +270,7 @@ export default function AntennaViewer({ width, length, boardWidth, boardLength, 
         <Suspense fallback={null}>
           {modelUrl
             ? <ImportedModel url={modelUrl} />
-            : <PatchModel width={width} length={length} boardWidth={boardWidth} boardLength={boardLength} thickness={thickness} pattern={pattern} density={density} cutaway={cutaway} />}
+            : <PatchModel width={width} length={length} boardWidth={boardWidth} boardLength={boardLength} thickness={thickness} pattern={pattern} density={density} materialType={materialType} cutaway={cutaway} />}
         </Suspense>
         <Grid position={[0, -0.54, 0]} args={[16, 16]} cellSize={0.5} cellThickness={0.5}
           sectionSize={2} sectionThickness={1} fadeDistance={18} infiniteGrid
